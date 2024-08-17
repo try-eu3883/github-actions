@@ -31,6 +31,13 @@ on:
         type: string
         default: us-docker.pkg.dev
 
+      REF:
+        required: true
+        type: string
+      
+      SHA:
+        required: true
+        type: string
 
 env:
   PROJECT_ID: ${{ inputs.PROJECT_ID }}
@@ -39,6 +46,8 @@ env:
   IMAGE: ${{ inputs.IMAGE }}
   DOCKER_TAG: ${{ inputs.DOCKER_TAG }}
   REGISTRY: ${{ inputs.REGISTRY }}
+  REF: ${{ inputs.REF }}
+  SHA: ${{ inputs.SHA }}
 
 jobs:
   build-and-deploy:
@@ -68,9 +77,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.ref }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ env.REF }}-${{ env.SHA }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ github.ref }}-
+            ${{ runner.os }}-buildx-${{ env.REF }}-
         
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -81,8 +90,8 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           build-args: |
-            GITHUB_SHA=${{ github.sha }}
-            GITHUB_REF=${{ github.ref }}
+            GITHUB_SHA=${{ env.SHA }}
+            GITHUB_REF=${{ env.REF }}
       
       - name: Deploy Cloud Run Revision
         run: |-
