@@ -41,6 +41,9 @@ on:
       
       workload_identity_provider:
         required: true
+      
+      project_id:
+        required: true
 
 env:
   PROJECT_ID: ${{ secrets.project_id }}
