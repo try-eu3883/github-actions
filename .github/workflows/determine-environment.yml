@@ -1,0 +1,29 @@
+name: "Build and Deploy"
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+
+jobs:
+  determine-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      REPO: ${{ steps.set-env.outputs.REPO }}
+      IMAGE: ${{ steps.set-env.outputs.IMAGE }}
+    
+    steps:
+      - name: Determine Environment
+        id: set-env
+        run: |
+          if [ "${{ github.ref_name}}" == "main" ]; then
+            echo "REPO=prod-registry" >> $GITHUB_OUTPUT
+            echo "IMAGE=prod-${{ github.event.inputs.service_name }}" >> $GITHUB_OUTPUT
+          fi
+
+          if [ "${{ github.ref_name}}" == "dev" ]; then
+            echo "REPO=dev-registry" >> $GITHUB_OUTPUT
+            echo "IMAGE=dev-${{ github.event.inputs.service_name }}" >> $GITHUB_OUTPUT
+          fi

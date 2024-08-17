@@ -39,9 +39,8 @@ on:
         required: true
         type: string
 
-
 env:
-  PROJECT_ID: ${{ inputs.PROJECT_ID }}
+  PROJECT_ID: ${{ secrets.PROJECT_ID }}
   REGION: ${{ inputs.REGION }}
   REPO: ${{ inputs.REPO }}
   IMAGE: ${{ inputs.IMAGE }}
