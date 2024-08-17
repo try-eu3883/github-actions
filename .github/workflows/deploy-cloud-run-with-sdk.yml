@@ -3,20 +3,16 @@ name: "Build and Deploy to Cloud Run with SDK (Python)"
 on:
   workflow_call:
     inputs:
-
-      PROJECT_ID:
-        required: true
-        type: string
       
       REGION:
         required: false
         type: string
         default: us-central1
-      
+
       REPO:
         required: true
         type: string
-      
+
       IMAGE:
         required: true
         type: string

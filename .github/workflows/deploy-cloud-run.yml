@@ -4,10 +4,6 @@ on:
   workflow_call:
     inputs:
 
-      PROJECT_ID:
-        required: true
-        type: string
-      
       REGION:
         required: false
         type: string
