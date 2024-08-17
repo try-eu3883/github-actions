@@ -6,6 +6,13 @@ on:
       service_name:
         required: true
         type: string
+    
+    outputs:
+      repo:
+        value: ${{ jobs.determine-environment.outputs.repo}}
+      
+      image:
+        value: ${{ jobs.determine-environment.outputs.image}}
 
 jobs:
   determine-environment:
@@ -30,8 +37,3 @@ jobs:
             echo "Unexpected branch name: ${{ github.ref_name }}, failing the job"
             exit 1
           fi
-      
-      - name: Test Environment Variables
-        run: |
-          echo "repo: ${{ steps.set-env.outputs.repo }}"
-          echo "image: ${{ steps.set-env.outputs.image }}"
