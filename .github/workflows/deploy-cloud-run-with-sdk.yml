@@ -68,14 +68,15 @@ jobs:
       
       - name: Configure Docker for GCP
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
-    
+        
+        #! TODO: rewrap  with "if" for sdk key attachement ?
       - id: secret_manager
         name: Get deploy key for private SDK
         uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           secrets: |-
             token:${{ env.PROJECT_ID }}/sdk-deploy-key
-      
+        
       - name: Set SSH key
         run: |-
           mkdir -p /tmp/ssh_keys
