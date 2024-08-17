@@ -4,11 +4,6 @@ on:
   workflow_call:
     inputs:
 
-      region:
-        required: false
-        type: string
-        default: us-central1
-
       repo:
         required: true
         type: string
@@ -22,18 +17,15 @@ on:
         type: string
         default: latest
       
+      region:
+        required: false
+        type: string
+        default: us-central1
+      
       registry:
         required: false
         type: string
         default: us-docker.pkg.dev
-      
-      ref:
-        required: true
-        type: string
-      
-      sha:
-        required: true
-        type: string
     
     secrets:
       service_account:
@@ -52,8 +44,6 @@ env:
   IMAGE: ${{ inputs.image }}
   DOCKER_TAG: ${{ inputs.tag }}
   REGISTRY: ${{ inputs.registry }}
-  REF: ${{ inputs.ref }}
-  SHA: ${{ inputs.sha }}
 
 jobs:
   build-and-deploy:
@@ -96,9 +86,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ env.REF }}-${{ env.SHA }}
+          key: ${{ runner.os }}-buildx-${{ github.ref }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ env.REF }}-
+            ${{ runner.os }}-buildx-${{ github.ref }}-
         
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -109,8 +99,8 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           build-args: |
-            GITHUB_SHA=${{ env.SHA }}
-            GITHUB_REF=${{ env.REF }}
+            GITHUB_SHA=${{ github.sha }}
+            GITHUB_REF=${{ github.ref }}
           secret-files: |
             ssh_key=/tmp/ssh_keys/id_github
       

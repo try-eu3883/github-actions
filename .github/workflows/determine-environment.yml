@@ -11,19 +11,22 @@ jobs:
   determine-environment:
     runs-on: ubuntu-latest
     outputs:
-      REPO: ${{ steps.set-env.outputs.REPO }}
-      IMAGE: ${{ steps.set-env.outputs.IMAGE }}
+      repo: ${{ steps.set-env.outputs.repo }}
+      image: ${{ steps.set-env.outputs.image }}
     
     steps:
       - name: Determine Environment
         id: set-env
         run: |
           if [ "${{ github.ref_name}}" == "main" ]; then
-            echo "REPO=prod-registry" >> $GITHUB_OUTPUT
-            echo "IMAGE=prod-${{ github.event.inputs.service_name }}" >> $GITHUB_OUTPUT
-          fi
+            echo "repo=prod-registry" >> $GITHUB_OUTPUT
+            echo "image=prod-${{ inputs.service_name }}" >> $GITHUB_OUTPUT
 
-          if [ "${{ github.ref_name}}" == "dev" ]; then
-            echo "REPO=dev-registry" >> $GITHUB_OUTPUT
-            echo "IMAGE=dev-${{ github.event.inputs.service_name }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name}}" == "dev" ]; then
+            echo "repo=dev-registry" >> $GITHUB_OUTPUT
+            echo "image=dev-${{ inputs.service_name }}" >> $GITHUB_OUTPUT
+
+          else
+            echo "Unexpected branch name: ${{ github.ref_name }}, failing the job"
+            exit 1
           fi
