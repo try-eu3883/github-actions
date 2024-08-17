@@ -4,46 +4,53 @@ on:
   workflow_call:
     inputs:
 
-      REGION:
+      region:
         required: false
         type: string
         default: us-central1
-      
-      REPO:
+
+      repo:
+        required: true
+        type: string
+
+      image:
         required: true
         type: string
       
-      IMAGE:
-        required: true
-        type: string
-      
-      DOCKER_TAG:
+      tag:
         required: false
         type: string
         default: latest
       
-      REGISTRY:
+      registry:
         required: false
         type: string
         default: us-docker.pkg.dev
-
-      REF:
+      
+      ref:
         required: true
         type: string
       
-      SHA:
+      sha:
         required: true
         type: string
+    
+    secrets:
+      service_account:
+        required: true
+      
+      workload_identity_provider:
+        required: true
 
 env:
-  PROJECT_ID: ${{ secrets.PROJECT_ID }}
-  REGION: ${{ inputs.REGION }}
-  REPO: ${{ inputs.REPO }}
-  IMAGE: ${{ inputs.IMAGE }}
-  DOCKER_TAG: ${{ inputs.DOCKER_TAG }}
-  REGISTRY: ${{ inputs.REGISTRY }}
-  REF: ${{ inputs.REF }}
-  SHA: ${{ inputs.SHA }}
+  PROJECT_ID: ${{ secrets.project_id }}
+  REGION: ${{ inputs.region }}
+  REPO: ${{ inputs.repo }}
+  IMAGE: ${{ inputs.image }}
+  DOCKER_TAG: ${{ inputs.tag }}
+  REGISTRY: ${{ inputs.registry }}
+  REF: ${{ inputs.ref }}
+  SHA: ${{ inputs.sha }}
 
 jobs:
   build-and-deploy:
@@ -63,8 +70,8 @@ jobs:
       - name: GCP authentication
         uses: 'google-github-actions/auth@v2'
         with:
-          service_account: ${{ secrets.GCP_WORKLOAD_IDENTITY_SERVICE_ACCOUNT }}
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.service_account }}
+          workload_identity_provider: ${{ secrets.workload_identity_provider }}
       
       - name: Configure Docker for GCP
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
