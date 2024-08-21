@@ -26,6 +26,15 @@ on:
         required: false
         type: string
         default: us-docker.pkg.dev
+      
+      additional_build_args:
+        required: false
+        type: string
+      
+      attach_sdk_secrets:
+        required: false
+        type: boolean
+        default: false
     
     secrets:
       service_account:
@@ -72,6 +81,7 @@ jobs:
         #! TODO: rewrap  with "if" for sdk key attachement ?
       - id: secret_manager
         name: Get deploy keys for private packages
+        if: ${{ inputs.attach_sdk_secrets }}
         uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           secrets: |-
@@ -79,6 +89,7 @@ jobs:
             token_ow:${{ env.PROJECT_ID }}/ormwtf-deploy-key
         
       - name: Set SSH key for SDK
+        if: ${{ inputs.attach_sdk_secrets }}
         run: |-
           mkdir -p /tmp/ssh_keys
           echo "${{ steps.secret_manager.outputs.token_sdk }}" >> /tmp/ssh_keys/id_github_sdk
@@ -105,9 +116,8 @@ jobs:
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
-          secret-files: |
-            ssh_key=/tmp/ssh_keys/id_github_sdk
-            ssh_key_ow=/tmp/ssh_keys/id_github_ow
+            ${{ inputs.additional_build_args || '' }}
+          secret-files: ${{ inputs.attach_sdk_secrets && 'ssh_key=/tmp/ssh_keys/id_github_sdk\nssh_key_ow=/tmp/ssh_keys/id_github_ow' || '' }}
       
       - name: Deploy Cloud Run Revision
         run: |-

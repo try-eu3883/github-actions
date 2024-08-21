@@ -26,6 +26,10 @@ on:
         required: false
         type: string
         default: us-docker.pkg.dev
+      
+      additional_build_args:
+        required: false
+        type: string
     
     secrets:
       service_account:
