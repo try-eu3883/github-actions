@@ -90,10 +90,11 @@ jobs:
       - name: Set SSH key for SDK
         if: ${{ inputs.attach_sdk_secrets }}
         run: |-
-          mkdir ~/.ssh ~/.ssh/git-keys
-          echo "${{ steps.secret_manager.outputs.token_sdk }}" >> ~/.ssh/git-keys/try-eu3883-hh-engine
-          echo "${{ steps.secret_manager.outputs.token_ow }}" >> ~/.ssh/git-keys/Misery7100-ormwtf
-          find ~/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
+          mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
+          echo "${{ steps.secret_manager.outputs.token_sdk }}" >> /home/runner/.ssh/git-keys/try-eu3883-hh-engine
+          echo "${{ steps.secret_manager.outputs.token_ow }}" >> /home/runner/.ssh/git-keys/Misery7100-ormwtf
+          find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
+          echo $(ls -l /home/runner/.ssh/git-keys/)
 
       - name: Cache Docker layers
         uses: actions/cache@v4
@@ -116,8 +117,8 @@ jobs:
             GITHUB_REF=${{ github.ref }}
             ${{ inputs.additional_build_args || '' }}
           ssh: |
-            ssh_key=~/.ssh/git-keys/try-eu3883-hh-engine
-            ssh_key_ow=~/.ssh/git-keys/Misery7100-ormwtf
+            default=/home/runner/.ssh/git-keys/try-eu3883-hh-engine
+            ormwtf=/home/runner/.ssh/git-keys/Misery7100-ormwtf
       
       - name: Deploy Cloud Run Revision
         run: |-
@@ -128,4 +129,4 @@ jobs:
       - name: Clean up secret files
         if: ${{ inputs.attach_sdk_secrets }}
         run: |
-          rm -rf ~/.ssh/git-keys
+          rm -rf /home/runner/.ssh/git-keys
