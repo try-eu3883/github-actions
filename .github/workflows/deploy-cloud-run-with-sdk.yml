@@ -91,10 +91,9 @@ jobs:
         if: ${{ inputs.attach_sdk_secrets }}
         run: |-
           mkdir -p /tmp/ssh_keys
-          echo "${{ steps.secret_manager.outputs.token_sdk }}" >> /tmp/ssh_keys/id_github_sdk
-          echo "${{ steps.secret_manager.outputs.token_ow }}" >> /tmp/ssh_keys/id_github_ow
-          chmod 600 /tmp/ssh_keys/id_github_sdk
-          chmod 600 /tmp/ssh_keys/id_github_ow
+          echo "${{ steps.secret_manager.outputs.token_sdk }}" >> ~/.ssh/git-keys/try-eu3883-hh-engine
+          echo "${{ steps.secret_manager.outputs.token_ow }}" >> ~/.ssh/git-keys/Misery7100-ormwtf
+          find ~/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
 
       - name: Cache Docker layers
         uses: actions/cache@v4
@@ -117,8 +116,8 @@ jobs:
             GITHUB_REF=${{ github.ref }}
             ${{ inputs.additional_build_args || '' }}
           ssh: |
-            ssh_key=/tmp/ssh_keys/id_github_sdk
-            ssh_key_ow=/tmp/ssh_keys/id_github_ow
+            ssh_key=~/.ssh/git-keys/try-eu3883-hh-engine
+            ssh_key_ow=~/.ssh/git-keys/Misery7100-ormwtf
       
       - name: Deploy Cloud Run Revision
         run: |-
@@ -129,4 +128,4 @@ jobs:
       - name: Clean up secret files
         if: ${{ inputs.attach_sdk_secrets }}
         run: |
-          rm -rf /tmp/ssh_keys
+          rm -rf ~/.ssh/git-keys/
