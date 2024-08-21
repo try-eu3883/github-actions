@@ -90,7 +90,7 @@ jobs:
       - name: Set SSH key for SDK
         if: ${{ inputs.attach_sdk_secrets }}
         run: |-
-          mkdir -p /tmp/ssh_keys
+          mkdir ~/.ssh ~/.ssh/git-keys
           echo "${{ steps.secret_manager.outputs.token_sdk }}" >> ~/.ssh/git-keys/try-eu3883-hh-engine
           echo "${{ steps.secret_manager.outputs.token_ow }}" >> ~/.ssh/git-keys/Misery7100-ormwtf
           find ~/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
@@ -128,4 +128,4 @@ jobs:
       - name: Clean up secret files
         if: ${{ inputs.attach_sdk_secrets }}
         run: |
-          rm -rf ~/.ssh/git-keys/
+          rm -rf ~/.ssh/git-keys
