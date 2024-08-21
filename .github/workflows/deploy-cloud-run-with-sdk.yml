@@ -78,7 +78,6 @@ jobs:
       - name: Configure Docker for GCP
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
         
-        #! TODO: rewrap  with "if" for sdk key attachement ?
       - id: secret_manager
         name: Get deploy keys for private packages
         if: ${{ inputs.attach_sdk_secrets }}
