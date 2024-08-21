@@ -124,3 +124,8 @@ jobs:
           gcloud run deploy ${{ env.IMAGE }} \
             --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.DOCKER_TAG }} \
             --region ${{ env.REGION }}
+      
+      - name: Clean up secret files
+        if: ${{ inputs.attach_sdk_secrets }}
+        run: |
+          rm -rf /tmp/ssh_keys
