@@ -71,17 +71,20 @@ jobs:
         
         #! TODO: rewrap  with "if" for sdk key attachement ?
       - id: secret_manager
-        name: Get deploy key for private SDK
+        name: Get deploy keys for private packages
         uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           secrets: |-
-            token:${{ env.PROJECT_ID }}/sdk-deploy-key
+            token_sdk:${{ env.PROJECT_ID }}/sdk-deploy-key
+            token_ow:${{ env.PROJECT_ID }}/ormwtf-deploy-key
         
-      - name: Set SSH key
+      - name: Set SSH key for SDK
         run: |-
           mkdir -p /tmp/ssh_keys
-          echo "${{ steps.secret_manager.outputs.token }}" >> /tmp/ssh_keys/id_github
-          chmod 600 /tmp/ssh_keys/id_github
+          echo "${{ steps.secret_manager.outputs.token_sdk }}" >> /tmp/ssh_keys/id_github_sdk
+          echo "${{ steps.secret_manager.outputs.token_ow }}" >> /tmp/ssh_keys/id_github_ow
+          chmod 600 /tmp/ssh_keys/id_github_sdk
+          chmod 600 /tmp/ssh_keys/id_github_ow
 
       - name: Cache Docker layers
         uses: actions/cache@v4
@@ -103,7 +106,8 @@ jobs:
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
           secret-files: |
-            ssh_key=/tmp/ssh_keys/id_github
+            ssh_key=/tmp/ssh_keys/id_github_sdk
+            ssh_key_ow=/tmp/ssh_keys/id_github_ow
       
       - name: Deploy Cloud Run Revision
         run: |-
