@@ -116,7 +116,7 @@ jobs:
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
             ${{ inputs.additional_build_args || '' }}
-          secret-files: |
+          ssh: |
             ssh_key=/tmp/ssh_keys/id_github_sdk
             ssh_key_ow=/tmp/ssh_keys/id_github_ow
       
