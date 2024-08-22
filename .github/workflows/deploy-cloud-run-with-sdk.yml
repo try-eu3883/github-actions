@@ -81,6 +81,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gnupg coreutils
       
+      - name: Verify installation of utilities
+        run: |
+          which base64
+          which gpg
+      
       - name: GCP authentication
         uses: google-github-actions/auth@v2
         with:
