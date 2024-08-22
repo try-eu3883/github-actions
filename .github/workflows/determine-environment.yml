@@ -1,4 +1,4 @@
-name: "Build and Deploy"
+name: "Determine Environment from Service and Branch"
 
 on:
   workflow_call:
