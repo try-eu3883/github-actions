@@ -46,7 +46,7 @@ on:
         required: true
       
       encryption_key:
-        required: true
+        required: false
 
 env:
   PROJECT_ID: ${{ secrets.project_id }}
