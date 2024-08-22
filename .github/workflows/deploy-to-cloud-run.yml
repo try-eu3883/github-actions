@@ -92,7 +92,7 @@ jobs:
           while IFS='|' read key value; do
             echo "$value" >> "/home/runner/.ssh/git-keys/$key"
             ssh_keys_path="${ssh_keys_path}${key}=/home/runner/.ssh/git-keys/$key\n"
-          done <<< "${{ inputs.ssh_keys }}"
+          done < <(echo "$decrypted_ssh_keys" | jq -r 'to_entries | map(.key + "|" + (.value | tostring)) | .[]')
         
           echo "ssh_keys_path<<EOF" >> "$GITHUB_OUTPUT"
           echo -e "${ssh_keys_path%\\n}" >> "$GITHUB_OUTPUT"
