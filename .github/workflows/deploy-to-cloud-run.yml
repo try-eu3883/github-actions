@@ -88,10 +88,10 @@ jobs:
 
           echo "input.ssh_keys:  ${{ inputs.ssh_keys }}"
           decrypted_ssh_keys=$(echo -n "${{ inputs.ssh_keys }}" | base64 -d | openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${{ secrets.encryption_key }}")
-          
-          echo "decrypted_ssh_keys: $decrypted_ssh_keys"
 
           while IFS='|' read key value; do
+            echo "$key"
+
             echo "$value" >> "/home/runner/.ssh/git-keys/$key"
             ssh_keys_path="${ssh_keys_path}${key}=/home/runner/.ssh/git-keys/$key\n"
           done < <(echo "$decrypted_ssh_keys" | jq -r 'to_entries | map(.key + "|" + (.value | tostring)) | .[]')
