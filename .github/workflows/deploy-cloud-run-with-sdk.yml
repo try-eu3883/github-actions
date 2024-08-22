@@ -86,6 +86,13 @@ jobs:
           which base64
           which gpg
       
+      - name: Test base64 and gpg
+        run: |
+          echo "TestString" | base64
+          echo "VGhpcyBpcyBhIHRlc3Qgc3RyaW5nCg==" | base64 -d
+          echo "DummyEncryptedData" | gpg --decrypt --batch --quiet --passphrase "dummy"
+  
+      
       - name: GCP authentication
         uses: google-github-actions/auth@v2
         with:
@@ -119,8 +126,8 @@ jobs:
           ssh_keys_paths=""
 
           while IFS= read -r line; do
-            PATH="${line%%=*}"
-            VALUE=$(echo -n '${line#*=}' | base64 -d | gpg --decrypt --quiet --batch --passphrase ${{ secrets.encryption_key }} --output -)
+            PATH=${line%%=*}
+            VALUE=$(echo -n ${line#*=} | base64 -d | gpg --decrypt --quiet --batch --passphrase '${{ secrets.encryption_key }}' --output -)
             echo "$VALUE" >> /home/runner/.ssh/git-keys/$PATH
             ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}\n"
           done <<< "${{ inputs.ssh_keys }}"
