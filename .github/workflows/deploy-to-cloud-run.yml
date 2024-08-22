@@ -90,21 +90,18 @@ jobs:
           decrypted_ssh_keys=$(echo -n "${{ inputs.ssh_keys }}" | base64 -d | openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${{ secrets.encryption_key }}")
 
           while IFS= read -r entry; do
-
             key=$(echo "$entry" | jq -r '.key')
             value=$(echo "$entry" | jq -r '.value')
-            echo "$value" > /home/runner/.ssh/git-keys/$key
-            ssh_keys_path="${ssh_keys_path}${key}=/home/runner/.ssh/git-keys/$key\n"
 
+            echo "$value" | tr -d '\r' > "/home/runner/.ssh/git-keys/$key"
+            chmod 600 "/home/runner/.ssh/git-keys/$key"
+
+            ssh_keys_path="${ssh_keys_path}${key}=/home/runner/.ssh/git-keys/$key\n"
           done < <(echo "$decrypted_ssh_keys" | jq -c 'to_entries[]')
         
           echo "ssh_keys_path<<EOF" >> "$GITHUB_OUTPUT"
           echo -e "${ssh_keys_path%\\n}" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
-
-          find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
-
-          echo $(ls -la /home/runner/.ssh/git-keys)
 
       - name: Cache Docker layers
         uses: actions/cache@v4
