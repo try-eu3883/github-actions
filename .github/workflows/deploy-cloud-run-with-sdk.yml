@@ -49,6 +49,9 @@ on:
       
       project_id:
         required: true
+      
+      encryption_key:
+        required: true
 
 env:
   PROJECT_ID: ${{ secrets.project_id }}
@@ -108,11 +111,11 @@ jobs:
 
           while IFS= read -r line; do
             PATH="${line%%=*}"
-            VALUE="${line#*=}"
+            VALUE=$(echo -n "${line#*=}" | base64 -d | gpg --decrypt --quiet --batch --passphrase ${{ secrets.encryption_key }} --output -)
             echo "$VALUE" >> /home/runner/.ssh/git-keys/$PATH
             ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}\n"
           done <<< "${{ inputs.ssh_keys }}"
-          
+
           echo "ssh_keys_path=${ssh_keys_path}" >> "$GITHUB_OUTPUT"
           find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
 
