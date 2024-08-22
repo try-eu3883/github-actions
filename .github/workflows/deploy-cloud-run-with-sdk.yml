@@ -76,6 +76,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
+      - name: Install Encryption utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg coreutils
+      
       - name: GCP authentication
         uses: google-github-actions/auth@v2
         with:
