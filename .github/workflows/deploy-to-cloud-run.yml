@@ -86,6 +86,8 @@ jobs:
           mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
           ssh_keys_paths=""
 
+          echo "input.ssh_keys:  ${{ inputs.ssh_keys }}"
+
           while IFS= read -r line; do
             FILE_PATH=$(echo "$line" | cut -d '=' -f 1)
             ENCRYPTED_VALUE=$(echo "$line" | cut -d '=' -f 2-)
