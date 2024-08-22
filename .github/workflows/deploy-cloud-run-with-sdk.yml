@@ -105,8 +105,8 @@ jobs:
         run: |-
           mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
           while IFS= read -r line; do
-            PATH=$(echo "$line" | cut -d '=' -f 1)
-            VALUE=$(echo "$line" | cut -d '=' -f 2-)
+            PATH="${line%%=*}"
+            VALUE="${line#*=}"
             echo "$VALUE" >> /home/runner/.ssh/git-keys/$PATH
             ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}\n"
           done <<< "${{ inputs.ssh_keys }}"
