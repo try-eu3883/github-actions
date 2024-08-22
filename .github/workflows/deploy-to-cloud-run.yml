@@ -1,0 +1,132 @@
+name: "Build and Deploy to Cloud Run"
+
+on:
+  workflow_call:
+    inputs:
+
+      repo:
+        required: true
+        type: string
+
+      image:
+        required: true
+        type: string
+      
+      tag:
+        required: false
+        type: string
+        default: latest
+      
+      region:
+        required: false
+        type: string
+        default: us-central1
+      
+      registry:
+        required: false
+        type: string
+        default: us-docker.pkg.dev
+      
+      build_args:
+        required: false
+        type: string
+      
+      ssh_keys:
+        required: false
+        type: string
+    
+    secrets:
+      service_account:
+        required: true
+      
+      workload_identity_provider:
+        required: true
+      
+      project_id:
+        required: true
+      
+      encryption_key:
+        required: true
+
+env:
+  PROJECT_ID: ${{ secrets.project_id }}
+  REGION: ${{ inputs.region }}
+  REPO: ${{ inputs.repo }}
+  IMAGE: ${{ inputs.image }}
+  DOCKER_TAG: ${{ inputs.tag }}
+  REGISTRY: ${{ inputs.registry }}
+
+jobs:
+  build-and-deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: GCP authentication
+        uses: google-github-actions/auth@v2
+        with:
+          service_account: ${{ secrets.service_account }}
+          workload_identity_provider: ${{ secrets.workload_identity_provider }}
+      
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Set up SSH keys
+        id: set_up_ssh_keys
+        run: |-
+          mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
+          ssh_keys_paths=""
+
+          while IFS= read -r line; do
+            PATH="${line%%=*}"
+            ENCRYPTED_VALUE="${line#*=}"
+            VALUE=$(echo -n "$ENCRYPTED_VALUE" | base64 -d | gpg --decrypt --quiet --batch --passphrase "${{ secrets.encryption_key }}" --output -)
+            
+            echo "$VALUE" >> "/home/runner/.ssh/git-keys/$PATH"
+            ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}\n"
+          done <<< ${{ inputs.ssh_keys }}
+
+          echo -e "ssh_keys_path=${ssh_keys_path}" >> "$GITHUB_OUTPUT"
+          find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ github.ref }}-
+        
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            GITHUB_REF=${{ github.ref }}
+            ${{ inputs.build_args || '' }}
+          ssh: |
+            ${{ steps.set_up_ssh_keys.outputs.ssh_keys_path }}
+      
+      - name: Deploy Cloud Run Revision
+        run: |-
+          gcloud run deploy ${{ env.IMAGE }} \
+            --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ env.DOCKER_TAG }} \
+            --region ${{ env.REGION }}
+      
+      - name: Clean up secret files
+        run: |
+          rm -rf /home/runner/.ssh/git-keys
