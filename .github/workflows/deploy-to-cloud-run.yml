@@ -34,6 +34,14 @@ on:
       ssh_keys:
         required: false
         type: string
+
+      secrets:
+        required: false
+        type: string
+      
+      secret_files:
+        required: false
+        type: string
     
     secrets:
       service_account:
@@ -102,6 +110,48 @@ jobs:
           echo "ssh_keys_path<<EOF" >> "$GITHUB_OUTPUT"
           echo -e "${ssh_keys_path%\\n}" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
+      
+      - name: Set up secrets
+        if: ${{ inputs.secrets }} 
+        id: set_up_secrets
+        run: |-
+          secrets=""
+
+          decrypted_secrets=$(echo -n "${{ inputs.secrets }}" | base64 -d | openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${{ secrets.encryption_key }}")
+
+          while IFS= read -r entry; do
+            key=$(echo "$entry" | jq -r '.key')
+            value=$(echo "$entry" | jq -r '.value')
+
+            secrets="${secrets}${key}=${value}\n"
+          done < <(echo "$decrypted_secrets" | jq -c 'to_entries[]')
+        
+          echo "secrets<<EOF" >> "$GITHUB_OUTPUT"
+          echo -e "${secrets%\\n}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Set up secret files
+        if: ${{ inputs.secret_files }} 
+        id: set_up_secret_files
+        run: |-
+          mkdir /home/runner/secret_files
+          secret_files_paths=""
+
+          decrypted_secret_files=$(echo -n "${{ inputs.secret_files }}" | base64 -d | openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${{ secrets.encryption_key }}")
+
+          while IFS= read -r entry; do
+            key=$(echo "$entry" | jq -r '.key')
+            value=$(echo "$entry" | jq -r '.value')
+
+            echo "$value" | tr -d '\r' > "/home/runner/secret_files/$key"
+            chmod 600 "/home/runner/secret_files/$key"
+
+            secret_files_path="${secret_files_path}${key}=/home/runner/secret_files/$key\n"
+          done < <(echo "$decrypted_secret_files" | jq -c 'to_entries[]')
+        
+          echo "secret_files_path<<EOF" >> "$GITHUB_OUTPUT"
+          echo -e "${secret_files_path%\\n}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Cache Docker layers
         uses: actions/cache@v4
@@ -125,6 +175,10 @@ jobs:
             ${{ inputs.build_args || '' }}
           ssh: |
             ${{ steps.set_up_ssh_keys.outputs.ssh_keys_path || '' }}
+          secrets: |
+            ${{ steps.set_up_secrets.outputs.secrets || '' }}
+          secret-files: |
+            ${{ steps.set_up_secret_files.outputs.secret_files_path || '' }}
       
       - name: Deploy Cloud Run Revision
         run: |-
