@@ -92,7 +92,7 @@ jobs:
             FILE_PATH=$(echo "$line" | cut -d '=' -f 1)
             ENCRYPTED_VALUE=$(echo "$line" | cut -d '=' -f 2-)
 
-            VALUE=$(echo -n "${ENCRYPTED_VALUE}" | base64 -d | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:'${{ secrets.encryption_key }}')
+            VALUE=$(echo -n "${ENCRYPTED_VALUE}" | openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${{ secrets.encryption_key }}")
             
             echo "$VALUE" >> "/home/runner/.ssh/git-keys/$FILE_PATH"
             ssh_keys_path="${ssh_keys_path}${FILE_PATH}=/home/runner/.ssh/git-keys/$FILE_PATH\n"
