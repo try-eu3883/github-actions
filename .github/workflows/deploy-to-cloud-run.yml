@@ -88,7 +88,7 @@ jobs:
 
           while IFS= read -r line; do
             FILE_PATH=$(echo "$line" | cut -d '=' -f 1)
-            ENCRYPTED_VALUE=$(echo "$line" | cut -d '=' -f 2- | tr -d '\n')
+            ENCRYPTED_VALUE=$(echo "$line" | cut -d '=' -f 2-)
 
             VALUE=$(echo -n "${ENCRYPTED_VALUE}" | base64 -d | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:'${{ secrets.encryption_key }}')
             
@@ -101,9 +101,6 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
           find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
-
-          echo $(ls -l /home/runner/.ssh/git-keys)
-          echo $(cat /home/runner/.ssh/git-keys/try-eu3883-hh-engine)
 
       - name: Cache Docker layers
         uses: actions/cache@v4
