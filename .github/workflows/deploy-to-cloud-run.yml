@@ -93,7 +93,7 @@ jobs:
             
             echo "$VALUE" >> "/home/runner/.ssh/git-keys/$FILE_PATH"
             ssh_keys_path="${ssh_keys_path}${FILE_PATH}=/home/runner/.ssh/git-keys/$FILE_PATH\n"
-          done <<< ${{ inputs.ssh_keys }}
+          done <<< "${{ inputs.ssh_keys }}"
 
           echo -e "ssh_keys_path=${ssh_keys_path}" >> "$GITHUB_OUTPUT"
           find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
