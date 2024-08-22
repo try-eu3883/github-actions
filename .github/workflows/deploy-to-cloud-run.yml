@@ -81,12 +81,12 @@ jobs:
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
 
       - name: Set up SSH keys
+        if: ${{ inputs.ssh_keys }} 
         id: set_up_ssh_keys
         run: |-
           mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
           ssh_keys_paths=""
 
-          echo "input.ssh_keys:  ${{ inputs.ssh_keys }}"
           decrypted_ssh_keys=$(echo -n "${{ inputs.ssh_keys }}" | base64 -d | openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${{ secrets.encryption_key }}")
 
           while IFS= read -r entry; do
@@ -125,7 +125,7 @@ jobs:
             GITHUB_REF=${{ github.ref }}
             ${{ inputs.build_args || '' }}
           ssh: |
-            ${{ steps.set_up_ssh_keys.outputs.ssh_keys_path }}
+            ${{ steps.set_up_ssh_keys.outputs.ssh_keys_path || '' }}
       
       - name: Deploy Cloud Run Revision
         run: |-
@@ -134,5 +134,6 @@ jobs:
             --region ${{ env.REGION }}
       
       - name: Clean up secret files
+        if: ${{ inputs.ssh_keys }} 
         run: |
           rm -rf /home/runner/.ssh/git-keys
