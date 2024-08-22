@@ -57,7 +57,7 @@ env:
   REGISTRY: ${{ inputs.registry }}
 
 jobs:
-  build-and-deploy:
+  deploy-to-cloud-run:
     permissions:
       contents: 'read'
       id-token: 'write'
