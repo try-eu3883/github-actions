@@ -104,12 +104,15 @@ jobs:
         id: set_up_ssh_keys
         run: |-
           mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
+          ssh_keys_paths=""
+
           while IFS= read -r line; do
             PATH="${line%%=*}"
             VALUE="${line#*=}"
             echo "$VALUE" >> /home/runner/.ssh/git-keys/$PATH
             ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}\n"
           done <<< "${{ inputs.ssh_keys }}"
+          
           echo "ssh_keys_path=${ssh_keys_path}" >> "$GITHUB_OUTPUT"
           find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
 
