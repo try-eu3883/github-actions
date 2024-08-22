@@ -17,9 +17,6 @@ on:
 jobs:
   determine-environment:
     runs-on: ubuntu-latest
-    outputs:
-      repo: ${{ steps.set-env.outputs.repo }}
-      image: ${{ steps.set-env.outputs.image }}
     
     steps:
       - name: Determine Environment
@@ -37,3 +34,7 @@ jobs:
             echo "Unexpected branch name: ${{ github.ref_name }}, failing the job"
             exit 1
           fi
+          
+    outputs:
+      repo: ${{ steps.set-env.outputs.repo }}
+      image: ${{ steps.set-env.outputs.image }}
