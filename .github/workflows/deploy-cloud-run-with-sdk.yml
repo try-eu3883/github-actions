@@ -101,16 +101,13 @@ jobs:
       #     echo "${{ steps.secret_manager.outputs.token_sdk }}" >> /home/runner/.ssh/git-keys/try-eu3883-hh-engine
       #     echo "${{ steps.secret_manager.outputs.token_ow }}" >> /home/runner/.ssh/git-keys/Misery7100-ormwtf
       #     find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
-      
-      - name: Install xmllint
-        run: sudo apt-get install -y gpg base64
 
       - name: Set up SSH keys
         id: set_up_ssh_keys
         run: |-
           mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
           ssh_keys_paths=""
-          
+
           while IFS= read -r line; do
             PATH="${line%%=*}"
             VALUE=$(echo -n '${line#*=}' | base64 -d | gpg --decrypt --quiet --batch --passphrase ${{ secrets.encryption_key }} --output -)
