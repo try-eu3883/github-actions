@@ -89,6 +89,9 @@ jobs:
           while IFS= read -r line; do
             FILE_PATH=$(echo "$line" | cut -d '=' -f 1)
             ENCRYPTED_VALUE=$(echo "$line" | cut -d '=' -f 2- | tr -d '\n')
+
+            echo -n "${ENCRYPTED_VALUE}"
+
             VALUE=$(echo -n "$ENCRYPTED_VALUE" | base64 -d | gpg --decrypt --quiet --batch --passphrase "${{ secrets.encryption_key }}" --output -)
             
             echo "$VALUE" >> "/home/runner/.ssh/git-keys/$FILE_PATH"
