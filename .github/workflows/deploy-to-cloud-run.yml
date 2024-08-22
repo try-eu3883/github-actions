@@ -93,7 +93,7 @@ jobs:
 
             key=$(echo "$entry" | jq -r '.key')
             value=$(echo "$entry" | jq -r '.value')
-            echo "$value" > "/home/runner/.ssh/git-keys/$key"
+            echo "$value" > /home/runner/.ssh/git-keys/$key
             ssh_keys_path="${ssh_keys_path}${key}=/home/runner/.ssh/git-keys/$key\n"
 
           done < <(echo "$decrypted_ssh_keys" | jq -c 'to_entries[]')
@@ -103,6 +103,8 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
           find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
+
+          echo $(ls -la /home/runner/.ssh/git-keys)
 
       - name: Cache Docker layers
         uses: actions/cache@v4
