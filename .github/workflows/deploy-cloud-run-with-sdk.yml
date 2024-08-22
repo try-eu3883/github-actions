@@ -107,13 +107,23 @@ jobs:
         run: |-
           mkdir /home/runner/.ssh /home/runner/.ssh/git-keys
           ssh_keys_paths=""
+
           while IFS= read -r line; do
             PATH="${line%%=*}""
             ENCRYPTED_VALUE="${line#*=}"
-            VALUE=$(echo -n "$ENCRYPTED_VALUE" | base64 -d | gpg --decrypt --quiet --batch --passphrase "${{ secrets.encryption_key }}" --output -)
+            VALUE=$(echo -n "$ENCRYPTED_VALUE" | base64 -d | gpg --decrypt --quiet --batch --passphrase "${{ secrets.encryption_key }}" --output - | tr -d '\n')
+            
             echo "$VALUE" >> "/home/runner/.ssh/git-keys/$PATH"
-            ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}\n"
+            ssh_keys_path="${ssh_keys_path}${PATH}=/home/runner/.ssh/git-keys/${PATH}"
+
+            if [[ $line != $(echo -n "$line") ]]; then
+              ssh_keys_path="${ssh_keys_path}\n"
+            fi
+
           done <<< "${{ inputs.ssh_keys }}"
+
+          echo ${ssh_keys_path}
+
           echo -e "ssh_keys_path=${ssh_keys_path}" >> "$GITHUB_OUTPUT"
           find /home/runner/.ssh/git-keys/ -type f -name "*" -exec chmod 600 {} +
 
