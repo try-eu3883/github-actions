@@ -74,7 +74,7 @@ jobs:
         
       - name: Determine Environment
         id: det_env
-        uses: ./.github/actions/determine-environment
+        uses: ./.github/actions/determine-environment.yml
         with:
           service_name: ${{ inputs.service_name }}
       
@@ -92,7 +92,7 @@ jobs:
       - name: Load secret files
         id: load_secret_files
         if: ${{ inputs.secret_files }}
-        uses: ./.github/actions/load-secrets
+        uses: ./.github/actions/load-secrets.yml
         with:
           secrets: ${{ inputs.secret_files }}
           target_directory: ${{ inputs.secret_files_dir }}
