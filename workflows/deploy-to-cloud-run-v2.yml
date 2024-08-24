@@ -1,0 +1,142 @@
+name: "Build and Deploy to Cloud Run"
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+
+      tag:
+        required: false
+        type: string
+        default: latest
+      
+      region:
+        required: false
+        type: string
+        default: us-central1
+      
+      registry:
+        required: false
+        type: string
+        default: us-docker.pkg.dev
+      
+      build_args:
+        required: false
+        type: string
+      
+      secret_files:
+        required: false
+        type: string
+      
+      secret_files_dir:
+        required: false
+        type: string
+        default: /home/runner/secret_files
+    
+    secrets:
+      service_account:
+        required: true
+      
+      workload_identity_provider:
+        required: true
+      
+      project_id:
+        required: true
+
+env:
+  PROJECT_ID: ${{ secrets.project_id }}
+  REGION: ${{ inputs.region }}
+  DOCKER_TAG: ${{ inputs.tag }}
+  REGISTRY: ${{ inputs.registry }}
+
+jobs:
+  deploy-to-cloud-run:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: GCP authentication
+        uses: google-github-actions/auth@v2
+        with:
+          service_account: ${{ secrets.service_account }}
+          workload_identity_provider: ${{ secrets.workload_identity_provider }}
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+      
+      # .... Composite Actions ....
+
+      - name: Checkout workflows repository
+        uses: actions/checkout@v4
+        with:
+          repository: try-eu3883/github-actions
+
+      - name: Determine Environment
+        id: det_env
+        uses: ./actions/determine-environment@main
+        with:
+          service_name: ${{ inputs.service_name }}
+
+      - name: Load secret files
+        id: load_secret_files
+        if: ${{ inputs.secret_files }}
+        uses: ./actions/load-secrets
+        with:
+          secrets: ${{ inputs.secret_files }}
+          target_directory: ${{ inputs.secret_files_dir }}
+          project_id: ${{ secrets.project_id }}
+      
+      # .... Main Workflow ....
+
+      - name: Set Name Envs
+        run: |
+          SERVICE_NAME="${{ steps.det_env.outputs.image }}"
+          FULL_NAME="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ steps.det_env.outputs.repo }}/${{ steps.det_env.outputs.image }}:${{ env.DOCKER_TAG }}"
+
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+          echo "FULL_NAME=$FULL_NAME" >> $GITHUB_ENV
+      
+      - name: Checkout main code
+        uses: actions/checkout@v4
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ github.ref }}-
+        
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ${{ env.FULL_NAME }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            GITHUB_REF=${{ github.ref }}
+            ${{ inputs.build_args || '' }}
+          secret-files: |
+            ${{ steps.load_secret_files.outputs.secret_paths || '' }}
+      
+      - name: Deploy Cloud Run Revision
+        run: |-
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.FULL_NAME }} \
+            --region ${{ env.REGION }}
+      
+      - name: Clean up secret files
+        if: ${{ inputs.secret_files }}
+        run: |
+          rm -rf ${{ inputs.secret_files_dir }}
