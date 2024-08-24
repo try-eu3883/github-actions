@@ -29,6 +29,11 @@ on:
       secret_files:
         required: false
         type: string
+      
+      secret_files_dir:
+        required: false
+        type: string
+        default: /home/runner/secret_files
     
     secrets:
       service_account:
@@ -39,9 +44,6 @@ on:
       
       project_id:
         required: true
-      
-      encryption_key:
-        required: false
 
 env:
   PROJECT_ID: ${{ secrets.project_id }}
@@ -93,7 +95,7 @@ jobs:
         uses: ./.github/actions/load-secrets
         with:
           secrets: ${{ inputs.secret_files }}
-          target_directory: /home/runner/secret_files
+          target_directory: ${{ inputs.secret_files_dir }}
           project_id: ${{ secrets.project_id }}
 
       - name: Cache Docker layers
