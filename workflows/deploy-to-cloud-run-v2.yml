@@ -60,6 +60,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout main code
+        uses: actions/checkout@v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
@@ -71,30 +74,21 @@ jobs:
 
       - name: Configure Docker for GCP
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
-      
-      # .... Composite Actions ....
-
-      - name: Checkout workflows repository
-        uses: actions/checkout@v4
-        with:
-          repository: try-eu3883/github-actions
 
       - name: Determine Environment
         id: det_env
-        uses: ./actions/determine-environment@main
+        uses: try-eu3883/github-actions/actions/determine-environment@main
         with:
           service_name: ${{ inputs.service_name }}
 
       - name: Load secret files
         id: load_secret_files
         if: ${{ inputs.secret_files }}
-        uses: ./actions/load-secrets
+        uses: try-eu3883/github-actions/actions/load-secrets@main
         with:
           secrets: ${{ inputs.secret_files }}
           target_directory: ${{ inputs.secret_files_dir }}
           project_id: ${{ secrets.project_id }}
-      
-      # .... Main Workflow ....
 
       - name: Set Name Envs
         run: |
@@ -103,9 +97,6 @@ jobs:
 
           echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
           echo "FULL_NAME=$FULL_NAME" >> $GITHUB_ENV
-      
-      - name: Checkout main code
-        uses: actions/checkout@v4
 
       - name: Cache Docker layers
         uses: actions/cache@v4
