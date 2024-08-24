@@ -1,14 +1,16 @@
-name: "Determine Environment from Service and Branch"
+name: "Determine Environment"
+description: "Determine the environment based on the service name and the branch name"
 
 inputs:
   service_name:
+    description: "The name of the service"
     required: true
-    type: string
 
 runs:
   using: composite
   steps:
     - name: Determine Environment
+      shell: bash
       id: set-env
       run: |
         if [ "${{ github.ref_name}}" == "main" ]; then
@@ -25,5 +27,9 @@ runs:
         fi
           
 outputs:
-  repo: ${{ steps.set-env.outputs.repo }}
-  image: ${{ steps.set-env.outputs.image }}
+  repo:
+    description: The repository to push the image to
+    value: ${{ steps.set-env.outputs.repo }}
+  image:
+    description: The image name
+    value: ${{ steps.set-env.outputs.image }}
