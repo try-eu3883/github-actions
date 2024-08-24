@@ -1,0 +1,29 @@
+name: "Determine Environment from Service and Branch"
+
+inputs:
+  service_name:
+    required: true
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Determine Environment
+      id: set-env
+      run: |
+        if [ "${{ github.ref_name}}" == "main" ]; then
+          echo "repo=prod-registry" >> "$GITHUB_OUTPUT"
+          echo "image=prod-${{ inputs.service_name }}" >> "$GITHUB_OUTPUT"
+
+        elif [ "${{ github.ref_name}}" == "dev" ]; then
+          echo "repo=dev-registry" >> "$GITHUB_OUTPUT"
+          echo "image=dev-${{ inputs.service_name }}" >> "$GITHUB_OUTPUT"
+
+        else
+          echo "Unexpected branch name: ${{ github.ref_name }}, failing the job"
+          exit 1
+        fi
+          
+outputs:
+  repo: ${{ steps.set-env.outputs.repo }}
+  image: ${{ steps.set-env.outputs.image }}
